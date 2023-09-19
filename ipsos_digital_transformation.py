@@ -16,7 +16,7 @@ collections.Mapping = collections.abc.Mapping
 collections.MutableSet = collections.abc.MutableSet
 collections.MutableMapping = collections.abc.MutableMapping
 
-os.chdir("ipsos_digital_transformation")
+#os.chdir("ipsos_digital_transformation")
 
 clean = re.compile('<.*?>')
 
@@ -52,7 +52,7 @@ while i < len(main_columns):
         a = ""
     
     if c[0] not in ["IDP207","IDP208","IDP209"]:
-        if re.match(pattern="^(\w+)\s(\(.+\))__(\d+)$", string=c[0]):
+        if re.match(pattern="^(\w+)\s(\(.+(?!\)))__(\d+)$", string=c[0]):
             #GRID (MA)
             m = re.search(pattern="^(\w+)", string=c[0])
 
@@ -127,7 +127,7 @@ while i < len(main_columns):
                 questionc_child_syntax += '};\n\n'
 
                 mdd_source.addScript(questions[question_name]["question_name"], question_syntax, childnodes=[questionc_child_syntax])
-        elif re.match(pattern="^(\w+)\s(\(.+\))$", string=c[0]):
+        elif re.match(pattern="^(\w+)\s(\(.+(?!\)))$", string=c[0]):
             #GRID (SA)
             m = re.search(pattern="^(\w+)", string=c[0])
 
@@ -142,7 +142,7 @@ while i < len(main_columns):
             if "attributes" not in questions[question_name].keys():
                 questions[question_name]["attributes"] = dict()
 
-            attribute_columns = [col for col in list(df_datasource.columns) if re.match(pattern="^({})\s(\(.+\))$".format(c[0][m.span()[0] : m.span()[1]]), string=col[0])]
+            attribute_columns = [col for col in list(df_datasource.columns) if re.match(pattern="^({})\s(\(.+(?!\)))$".format(c[0][m.span()[0] : m.span()[1]]), string=col[0])]
 
             for attr_column in attribute_columns:
                 attribute_name = "R{}".format(len(questions[question_name]["attributes"].keys()) + 1)
@@ -215,7 +215,7 @@ while i < len(main_columns):
             
             mdd_source.addScript(questions[question_name]["question_name"], question_syntax)
 
-            step = len(question_columns)
+            step = len(attribute_columns)
 
         elif re.match(pattern="^(\w+)__(\d+)$", string=c[0]):
             #CATEGORICAL (MA)
