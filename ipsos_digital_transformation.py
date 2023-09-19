@@ -128,7 +128,7 @@ while i < len(main_columns):
 
                 mdd_source.addScript(questions[question_name]["question_name"], question_syntax, childnodes=[questionc_child_syntax])
         elif re.match(pattern="^(\w+)\s(\(.+(?!\)))$", string=c[0]):
-            #GRID (SA)
+            #GRID (SA) - UPDATED
             m = re.search(pattern="^(\w+)", string=c[0])
 
             question_name = "{}_LOOP".format(c[0][m.span()[0] : m.span()[1]])
@@ -216,7 +216,7 @@ while i < len(main_columns):
             mdd_source.addScript(questions[question_name]["question_name"], question_syntax)
 
             step = len(attribute_columns)
-
+        
         elif re.match(pattern="^(\w+)__(\d+)$", string=c[0]):
             #CATEGORICAL (MA)
             question_name = c[0].split("__")[0]
