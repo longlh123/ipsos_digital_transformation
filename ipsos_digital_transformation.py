@@ -21,10 +21,10 @@ collections.MutableMapping = collections.abc.MutableMapping
 clean = re.compile('<.*?>')
 
 #dien thong tin ten du an
-project_name = "VN2023200DIGITAL_THEGLORY"
+project_name = "VN2023XXXDIGITAL_AOI"
 
 root = r"projects\{}".format(project_name)
-excel_path = r"{}\{}".format(root, "out2023-09-17.xlsx")
+excel_path = r"{}\{}".format(root, "out2023-09-21.xlsx")
 
 source_dms_file =  r"dms\OutputDDFFile.dms"
 source_mdd_file =  r"template\TemplateProject.mdd"
@@ -51,12 +51,14 @@ while i < len(main_columns):
     if "IDP205" in c[0]:
         a = ""
     
-    if c[0] not in ["IDP207","IDP208","IDP209"]:
+    if c[0] not in ["IDP178","IDP179","IDP185","IDP187","IDP186","IDP188"]:
         if re.match(pattern="^(\w+)\s(\(.+(?!\)))__(\d+)$", string=c[0]):
             #GRID (MA)
             m = re.search(pattern="^(\w+)", string=c[0])
 
-            question_name = "{}_LOOP".format(c[0][m.span()[0] : m.span()[1]])
+            column_name = c[0][m.span()[0] : m.span()[1]]
+
+            question_name = "{}_LOOP".format(column_name)
 
             if question_name not in list(questions.keys()):
                 questions[question_name] = dict()
@@ -115,7 +117,7 @@ while i < len(main_columns):
 
                 question_syntax += '}fields()expand grid;\n\n'
                 
-                questionc_child_syntax = '_Codes "Codes" categorical[1..]\n{\n'
+                questionc_child_syntax = '_Codes "Codes" [py_setColumnName=\"{}\", py_showPunchingData=True] categorical[1..]\n{\n'.format(column_name)
 
                 for cid, category in questions[question_name]["categories"].items():
                     category_syntax = '\t%s "%s"' % (cid, category["label"])
@@ -128,10 +130,12 @@ while i < len(main_columns):
 
                 mdd_source.addScript(questions[question_name]["question_name"], question_syntax, childnodes=[questionc_child_syntax])
         elif re.match(pattern="^(\w+)\s(\(.+(?!\)))$", string=c[0]):
-            #GRID (SA) - UPDATED
+            #GRID (SA)
             m = re.search(pattern="^(\w+)", string=c[0])
 
-            question_name = "{}_LOOP".format(c[0][m.span()[0] : m.span()[1]])
+            column_name = c[0][m.span()[0] : m.span()[1]]
+
+            question_name = "{}_LOOP".format(column_name)
 
             if question_name not in list(questions.keys()):
                 questions[question_name] = dict()
@@ -149,7 +153,7 @@ while i < len(main_columns):
 
                 questions[question_name]["attributes"][attribute_name] = attr_column[1]
 
-                if all([s not in c[0] for s in ["IDP205","IDP206"]]):
+                if all([s not in c[0] for s in ["IDP196","IDP200"]]):
                     df_datasource_codes[attr_column] = df_datasource_codes[attr_column].fillna(0).astype(np.int64)
 
                     df_datasource.loc[df_datasource[attr_column].notnull(), attr_column] = df_datasource_codes.loc[df_datasource_codes[attr_column].notnull(), attr_column].astype(str) + ". " + df_datasource.loc[df_datasource[attr_column].notnull(), attr_column].astype(str)
@@ -199,8 +203,8 @@ while i < len(main_columns):
 
                 question_syntax += attribute_syntax 
             
-            if all([s not in c[0] for s in ["IDP205","IDP206"]]):
-                question_syntax += '}fields(_Codes "Codes" categorical[1..1]\n{\n'
+            if all([s not in c[0] for s in ["IDP196","IDP200"]]):
+                question_syntax += '}fields(_Codes "Codes" [py_setColumnName=\"%s\"] categorical[1..1]\n{\n' % (column_name)
 
                 for cid, category in questions[question_name]["categories"].items():
                     category_syntax = '\t%s "%s"' % (cid, category["label"])
@@ -211,7 +215,7 @@ while i < len(main_columns):
 
                 question_syntax += '})expand grid;\n\n'
             else:
-                question_syntax += '}fields(_Text "Text" text;)expand grid;\n\n'
+                question_syntax += '}fields(_Text [py_setColumnName=\"%s\"] "Text" text;)expand grid;\n\n' % (column_name)
             
             mdd_source.addScript(questions[question_name]["question_name"], question_syntax)
 
@@ -252,7 +256,7 @@ while i < len(main_columns):
             df_datasource[question_name] = df_datasource[question_columns].apply(lambda x: np.nan if x.count() == 0 else str("{") + ','.join(["_{}".format(str(i)) for i in list(x) if pd.isna(i) is False]) + str("}"), axis=1)
             df_datasource.drop(columns=question_columns, inplace=True)
 
-            question_syntax = '%s "%s"\ncategorical%s\n{\n' % (questions[question_name]["question_name"], questions[question_name]["question_text"], "[1..]")
+            question_syntax = '%s [py_setColumnName=\"%s\",py_showPunchingData=True] "%s"\ncategorical%s\n{\n' % (questions[question_name]["question_name"], questions[question_name]["question_name"], questions[question_name]["question_text"], "[1..]")
 
             for cid, category in questions[question_name]["categories"].items():
                 category_syntax = '\t%s "%s"' % (cid, category["label"])
@@ -361,7 +365,7 @@ while i < len(main_columns):
 
                         question_syntax += attribute_syntax 
 
-                    question_syntax += '}fields(_Codes "Codes" categorical[1..1]\n{\n'
+                    question_syntax += '}fields(_Codes [py_setColumnName=\"{}\"] "Codes" categorical[1..1]\n{\n'.format(question_name)
 
                     for cid, category in questions[question_name]["categories"].items():
                         category_syntax = '\t%s "%s"' % (cid, category["label"])
@@ -395,7 +399,7 @@ while i < len(main_columns):
                 if df_datasource[c].dtype.name not in ["object","str"]:
                     df_datasource.rename(columns={ c[0] : question_name }, inplace=True)
 
-                    mdd_source.addScript(questions[question_name]["question_name"], '%s "%s" %s;\n\n' % (questions[question_name]["question_name"], questions[question_name]["question_text"], "double"))
+                    mdd_source.addScript(questions[question_name]["question_name"], '%s [py_setColumnName=\"%s\"] "%s" %s;\n\n' % (questions[question_name]["question_name"], questions[question_name]["question_name"], questions[question_name]["question_text"], "double"))
                 else:
                     df_datasource_codes[c] = df_datasource_codes[c].fillna(0).astype(np.int64)
                     
@@ -432,7 +436,7 @@ while i < len(main_columns):
                                     
                                 idx_cat += 1
                     
-                    question_syntax = '%s "%s"\ncategorical%s\n{\n' % (questions[question_name]["question_name"], questions[question_name]["question_text"], "[1..1]")
+                    question_syntax = '%s [py_setColumnName=\"%s\"] "%s"\ncategorical%s\n{\n' % (questions[question_name]["question_name"], questions[question_name]["question_name"], questions[question_name]["question_text"], "[1..1]")
 
                     for cid, category in questions[question_name]["categories"].items():
                         category_syntax = '\t%s "%s"' % (cid, category["label"])
@@ -460,7 +464,7 @@ while i < len(main_columns):
 
                             df_datasource.rename(columns={ c_next[0] : questions[question_name]["question_name"] }, inplace=True)
 
-                            mdd_source.addScript(questions[question_name]["question_name"], '%s "%s" %s;\n\n' % (questions[question_name]["question_name"], questions[question_name]["question_text"], "text"))
+                            mdd_source.addScript(questions[question_name]["question_name"], '%s [py_setColumnName=\"%s\"] "%s" %s;\n\n' % (questions[question_name]["question_name"], questions[question_name]["question_name"], questions[question_name]["question_text"], "text"))
 
                             step += 1
             
@@ -479,7 +483,7 @@ while i < len(main_columns):
         df_datasource[c] = df_datasource[c].astype(str)
 
         if df_datasource[c].dtype.name in ["object","str"]:
-            mdd_source.addScript(questions[question_name]["question_name"], '%s "%s" %s;\n\n' % (questions[question_name]["question_name"], questions[question_name]["question_text"], "text"))
+            mdd_source.addScript(questions[question_name]["question_name"], '%s [py_setColumnName=\"%s\"] "%s" %s;\n\n' % (questions[question_name]["question_name"], questions[question_name]["question_name"], questions[question_name]["question_text"], "text"))
     
     i += step
 
@@ -518,7 +522,7 @@ for i, row in df_datasource[list(df_datasource.columns)].iterrows():
                     if "datetime" in str(type(row[idx])):
                         s = s.strftime("%m/%d/%Y, %H:%M:%S")
                     else: 
-                        s = s.replace("\n", "")
+                        s = s.replace("\n", "").replace("'", "`")
 
                     v.append("'{}'".format(s) if len(s) > 0 else np.nan)
                 else:
